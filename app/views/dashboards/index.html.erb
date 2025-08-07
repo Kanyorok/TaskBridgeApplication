@@ -1,0 +1,522 @@
+<% provide(:title, "SLA Report") %>
+
+<div class="mx-auto mb-6 p-6">
+  <div class="flex justify-between items-center">
+    <div class="relative w-80">
+      <input type="text" id="search" class="w-full px-4 py-2 border rounded-md dark:bg-gray-700" placeholder="Search Teams..." autocomplete="new-password" onkeyup="filterDropdown()" onfocus="showDropdown()">
+      <div id="dropdown" class="absolute w-full border border-gray-300 rounded-md font-medium placeholder-current focus:outline-none bg-white dark:bg-gray-700 dark:border-gray-50 w-full hidden">
+        <% @teams.each do |team| %>
+          <div class="dropdown-item px-4 py-2 hover:bg-gray-100 hover:dark:bg-gray-900 cursor-pointer" onclick="selectItem(this)"><%= team.name %></div>
+        <% end %>
+      </div>
+    </div>
+
+    <h1 class="text-3xl font-bold">All Tickets from Inception</h1>
+
+    <button type="button"
+            onclick="refreshStats()"
+            class="text-white bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center">
+      Refresh
+    </button>
+  </div>
+
+  <!-- Stats Section -->
+  <div class="grid sm:grid-cols-5 md:grid-cols-5 lg:grid-cols-5 gap-6 mb-8 mt-6">
+    <div class="col-span-1 sm:col-span-5 md:col-span-5 lg:col-span-5">
+      <a href="#" class="stat-card-link" data-type="tickets_from_inception_count" onclick="fetchTicketDetails('<%= @selected_team %>', 'tickets_from_inception_count')">
+        <%= render 'dashboards/stat_card', title: "Total Open Tickets from Inceptions( Minus Closed, Resolved or Declined)", value: @stats[:tickets_from_inception], id: "tickets_from_inception_count"%>
+        <div class="mt-2 text-sm" data-type="tickets_from_inception_by_status" id="tickets_from_inception_by_status">
+          <% if @stats[:tickets_from_inception_by_status].present? %>
+            <% @stats[:tickets_from_inception_by_status].each do |status, count| %>
+              <div class="text-lg font-bold mb-2">
+                <span class="text-lg font-bold mb-2"><%= status %>:</span> <%= count %>
+              </div>
+            <% end %>
+          <% else %>
+            <div class="text-gray-400">No status breakdown available.</div>
+          <% end %>
+        </div>
+      </a>
+    </div>
+
+    <div class="col-span-1 sm:col-span-5 md:col-span-5 lg:col-span-5">
+      <h1 class="text-3xl font-bold text-center">All Stats Within Last 30 Days</h1>
+    </div>
+    <div class="col-span-1 sm:col-span-5 md:col-span-5 lg:col-span-5">
+      <a href="#" class="stat-card-link" data-type="total_tickets_last_30_days" onclick="fetchTicketDetails('<%= @selected_team %>', 'total_tickets_last_30_days')">
+        <%= render 'dashboards/stat_card', title: "Total Tickets Last 30 days", value: @stats[:total_tickets_last_30_days], id: "total_tickets_last_30_days"%>
+      </a>
+    </div>
+    <div class="col-span-1 sm:col-span-2 md:col-span-2 lg:col-span-2">
+    <!-- initial Breach -->
+      <a href="#" class="stat-card-link" data-type="initial_response_time_breached" onclick="fetchTicketDetails('<%= @selected_team %>', 'initial_response_time_breached')">
+        <%= render 'dashboards/stat_card', title: "Initial Response Time - Breached", value: @stats[:breached_tickets_last_30_days], id: "initial_response_time_breached", class: 'col-span-1' %>
+       </a>
+    </div>
+    <div class="col-span-1 sm:col-span-2 md:col-span-2 lg:col-span-2">
+    <!-- initial Not Breach -->
+      <a href="#" class="stat-card-link" data-type="initial_response_time_not_breached" onclick="fetchTicketDetails('<%= @selected_team %>', 'initial_response_time_not_breached')">
+        <%= render 'dashboards/stat_card', title: "Initial Response Time - Not Breached", value: @stats[:not_breached_tickets_last_30_days], id: "initial_response_time_not_breached", class: 'col-span-1'  %>
+      </a>
+    </div>
+    <a href="#" class="stat-card-link" data-type="no_sla_population" onclick="fetchTicketDetails('<%= @selected_team %>', 'no_sla_population')">
+      <%= render 'dashboards/stat_card', title: "No SLA-(NEW FEATURE)", value: @stats[:no_sla_tickets_last_30_days], id: "no_sla_population", class: 'col-span-1'  %>
+    </a>
+    <!-- target repair time breach -->
+    <div class="col-span-1 sm:col-span-5 md:col-span-5 lg:col-span-5">
+      <div class="grid sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 gap-6">
+        <div>
+        <div class="col-span-1 sm:col-span-2 md:col-span-2 lg:col-span-2">
+          <a href="#" class="stat-card-link" data-type="target_repair_time_breached" onclick="fetchTicketDetails('<%= @selected_team %>', 'target_repair_time_breached')">
+            <%= render 'dashboards/stat_card', title: "Target Repair Time - Breached", value: @stats[:response_breached_tickets_last_30_days], id: "target_repair_time_breached", class: 'col-span-1'  %>
+          </a>
+          <div class="grid sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2">
+            <a href="#" class="stat-card-link" data-type="target_repair_time_breached_open" onclick="fetchTicketDetails('<%= @selected_team %>', 'target_repair_time_breached_open')">
+              <%= render 'dashboards/stat_card', title: "(Open)", value: @stats[:response_breached_tickets_open_last_30_days], id: "target_repair_time_breached_open", class: 'col-span-1'  %>
+            </a>
+            <a href="#" class="stat-card-link" data-type="target_repair_time_breached_closed" onclick="fetchTicketDetails('<%= @selected_team %>', 'target_repair_time_breached_closed')">
+              <%= render 'dashboards/stat_card', title: "(Closed)", value: @stats[:response_breached_tickets_closed_last_30_days], id: "target_repair_time_breached_closed", class: 'col-span-1'  %>
+            </a>
+          </div>
+        </div>
+        </div>
+        <div>
+        <div class="col-span-1 sm:col-span-2 md:col-span-2 lg:col-span-2">
+          <a href="#" class="stat-card-link" data-type="target_resolution_time_breached" onclick="fetchTicketDetails('<%= @selected_team %>', 'target_resolution_time_breached')">
+            <%= render 'dashboards/stat_card', title: "Target Resolution Time - Breached", value: @stats[:resolution_breached_tickets_last_30_days], id: "target_resolution_time_breached", class: 'col-span-1'  %>
+          </a>
+          <div class="grid sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2">
+            <a href="#" class="stat-card-link" data-type="target_resolution_time_breached_open" onclick="fetchTicketDetails('<%= @selected_team %>', 'target_resolution_time_breached_open')">
+              <%= render 'dashboards/stat_card', title: "(Open)", value: @stats[:resolution_breached_tickets_last_30_days], id: "target_resolution_time_breached_open", class: 'col-span-1'  %>
+            </a>
+            <a href="#" class="stat-card-link" data-type="target_resolution_time_breached_closed" onclick="fetchTicketDetails('<%= @selected_team %>', 'target_resolution_time_breached_open')">
+              <%= render 'dashboards/stat_card', title: "(Closed)", value: @stats[:resolution_breached_tickets_last_30_days], id: "target_resolution_time_breached_closed", class: 'col-span-1'  %>
+            </a>
+          </div>
+        </div>
+        </div>
+      </div>
+    </div>
+      <div class="col-span-1 sm:col-span-5 md:col-span-5 lg:col-span-5">
+        <div class="grid sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 gap-6">
+          <a href="#" class="stat-card-link" data-type="target_repair_time_not_breached" onclick="fetchTicketDetails('<%= @selected_team %>', 'target_repair_time_not_breached')">
+            <%= render 'dashboards/stat_card', title: "Target Repair Time - Not Breached", value: @stats[:not_response_breached_tickets_last_30_days], id: "target_repair_time_not_breached", class: 'col-span-1'  %>
+          </a>
+          <a href="#" class="stat-card-link" data-type="target_resolution_time_not_breached" onclick="fetchTicketDetails('<%= @selected_team %>', 'target_resolution_time_not_breached')">
+            <%= render 'dashboards/stat_card', title: "Target Resolution Time - Not Breached", value: @stats[:not_resolution_breached_tickets_last_30_days], id: "target_resolution_time_not_breached", class: 'col-span-1'  %>
+          </a>
+        </div>
+      </div>
+    <!-- target repair time not breach -->
+  </div>
+  <!-- Charts Section -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div class="bg-white dark:bg-gray-700 p-4 shadow-md rounded-lg">
+      <h2 class="text-lg font-semibold mb-3 text-center">Target Repair Time (Breached vs Not Breached)</h2>
+      <div id="responseTimeChart">
+        <%= pie_chart [["Breached", @stats[:response_breached_tickets_last_30_days]], ["Not Breached", @stats[:not_response_breached_tickets_last_30_days]]], colors: %w[#ff0000 #0000ff] %>
+      </div>
+    </div>
+
+    <div class="bg-white dark:bg-gray-700 p-4 shadow-md rounded-lg">
+      <h2 class="text-lg font-semibold mb-3 text-center">Target Resolution Time (Breached vs Not Breached)</h2>
+      <div id="resolutionTimeChart">
+        <%= pie_chart [["Breached", @stats[:resolution_breached_tickets_last_30_days]], ["Not Breached", @stats[:not_resolution_breached_tickets_last_30_days]]], colors: %w[#ff0000 #0000ff]%>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts Section -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-10">
+    <div class="bg-white dark:bg-gray-700 p-4 shadow-md rounded-lg">
+      <h2 class="text-lg font-semibold mb-3 text-center">Target Repair Time Breached (Closed vs Open)</h2>
+      <div id="responseOpenClosedTimeChart">
+        <%= pie_chart [["Closed", @stats[:response_breached_tickets_closed_last_30_days]], ["Open", @stats[:response_breached_tickets_open_last_30_days]]], colors: %w[#ff0000 #0000ff] %>
+      </div>
+    </div>
+
+    <div class="bg-white dark:bg-gray-700 p-4 shadow-md rounded-lg">
+      <h2 class="text-lg font-semibold mb-3 text-center">Target Resolution Time Breached (Closed vs Open)</h2>
+      <div id="resolutionOpenClosedTimeChart">
+        <%= pie_chart [["Closed", @stats[:resolution_breached_tickets_last_30_days]], ["Open", @stats[:not_resolution_breached_tickets_last_30_days]]], colors: %w[#ff0000 #0000ff]%>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts Section -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-10">
+    <div class="bg-white dark:bg-gray-700 p-4 shadow-md rounded-lg">
+      <h2 class="text-lg font-semibold mb-3 text-center">Target Repair Time Assignees (Breached)</h2>
+      <div id="breachedTicketsAssigneeChart">
+        <% if @stats[:breached_tickets_per_assignee] %>
+          <%= pie_chart @stats[:breached_tickets_per_assignee].map { |name, count| ["#{name} (#{count})", count] }, legend: "right" %>
+        <% else %>
+          <p>No data available</p>
+        <% end %>
+      </div>
+    </div>
+
+    <div class="bg-white dark:bg-gray-700 p-4 shadow-md rounded-lg">
+      <h2 class="text-lg font-semibold mb-3 text-center">Target Repair Time Clients (Breached)</h2>
+      <div id="resolutionTimeChartAssignee">
+        <% if @stats[:breached_resolution_tickets_per_project] %>
+          <%= pie_chart @stats[:breached_resolution_tickets_per_project].map { |name, count| ["#{name} (#{count})", count] }, legend: "right" %>
+        <% else %>
+          <p>No data available</p>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts Section -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-10">
+    <div class="bg-white dark:bg-gray-700 p-4 shadow-md rounded-lg">
+      <h2 class="text-lg font-semibold mb-3 text-center">Target Resolution Time Assignees (Breached)</h2>
+      <div id="breachedResolvedTicketsAssigneeChart">
+        <% if @stats[:breached_tickets_resolved_per_assignee] %>
+          <%= pie_chart @stats[:breached_tickets_resolved_per_assignee].map { |name, count| ["#{name} (#{count})", count] }, legend: "right" %>
+        <% else %>
+          <p>No data available</p>
+        <% end %>
+      </div>
+    </div>
+
+    <div class="bg-white dark:bg-gray-700 p-4 shadow-md rounded-lg">
+      <h2 class="text-lg font-semibold mb-3 text-center">Target Resolution Time Clients (Breached)</h2>
+      <div id="resolutionResolvedTimeChartAssignee">
+        <% if @stats[:breached_resolution_resolved_tickets_per_project] %>
+          <%= pie_chart @stats[:breached_resolution_resolved_tickets_per_project].map { |name, count| ["#{name} (#{count})", count] }, legend: "right" %>
+        <% else %>
+          <p>No data available</p>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%= render partial: 'dashboards/sla_modal' %>
+
+<script>
+  let selectedTeam = null;
+
+  function showDropdown() {
+    document.getElementById("dropdown").classList.remove("hidden");
+  }
+
+  function hideDropdown(event) {
+    if (!event.target.closest(".relative")) {
+      document.getElementById("dropdown").classList.add("hidden");
+    }
+  }
+
+  function filterDropdown() {
+    let input = document.getElementById("search").value.toLowerCase();
+    let dropdown = document.getElementById("dropdown");
+    let items = dropdown.getElementsByClassName("dropdown-item");
+    dropdown.classList.remove("hidden");
+
+    for (let item of items) {
+      let text = item.textContent || item.innerText;
+      item.style.display = text.toLowerCase().includes(input) ? "block" : "none";
+    }
+  }
+
+  function selectItem(element) {
+    const teamName = element.textContent.trim();
+    document.getElementById("search").value = teamName;
+    selectedTeam = teamName; // Store the selected team
+
+    // Remove 'selected' class from all items
+    document.querySelectorAll(".dropdown-item").forEach(item => {
+      item.classList.remove("selected");
+    });
+
+    // Add 'selected' class to clicked item
+    element.classList.add("selected");
+    document.getElementById("dropdown").classList.add("hidden");
+
+    fetchStats(teamName); // Call the fetch function
+  }
+
+  function refreshStats() {
+    if (selectedTeam) {
+      fetchStats(selectedTeam);
+    } else {
+      alert("Please select a team first.");
+    }
+  }
+
+  function fetchStats(teamName) {
+
+    fetch(`/dashboards/fetch_stats?team_name=${teamName}`)
+      .then(response => response.json())
+      .then(data => {
+        document.getElementById("total_tickets_last_30_days").innerText = data.total_tickets_last_30_days;
+        document.getElementById("initial_response_time_breached").innerText = data.breached_tickets_last_30_days;
+        document.getElementById("initial_response_time_not_breached").innerText = data.not_breached_tickets_last_30_days;
+        document.getElementById("target_repair_time_breached").innerText = data.response_breached_tickets_last_30_days;
+        document.getElementById("target_repair_time_not_breached").innerText = data.not_response_breached_tickets_last_30_days;
+        document.getElementById("target_resolution_time_breached").innerText = data.resolution_breached_tickets_last_30_days;
+        document.getElementById("target_resolution_time_not_breached").innerText = data.not_resolution_breached_tickets_last_30_days;
+        document.getElementById("target_repair_time_breached_open").innerText = data.response_breached_tickets_open_last_30_days;
+        document.getElementById("target_repair_time_breached_closed").innerText = data.response_breached_tickets_closed_last_30_days;
+        document.getElementById("target_resolution_time_breached_open").innerText = data.resolution_breached_open_last_30_days;
+        document.getElementById("target_resolution_time_breached_closed").innerText = data.resolution_breached_closed_last_30_days;
+        document.getElementById("no_sla_population").innerText = data.no_sla_tickets_last_30_days;
+        document.getElementById("tickets_from_inception_count").innerText = data.tickets_from_inception_count;
+
+        const container = document.getElementById("tickets_from_inception_by_status");
+        container.innerHTML = ""; // Clear existing content
+
+        const statusData = data.tickets_from_inception_by_status;
+
+        if (statusData && Object.keys(statusData).length > 0) {
+          let statuses = Object.keys(statusData);
+          let counts = Object.values(statusData);
+
+          let html = `
+              <table class="min-w-full border text-center bg-white dark:bg-gray-700">
+                <thead>
+                  <tr>
+                    ${statuses.map(status => `<th class="px-2 py-1 border-b font-bold text-md">${status}</th>`).join('')}
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    ${counts.map(count => `<td class="px-2 py-1 border-b font-bold text-xl">${count}</td>`).join('')}
+                  </tr>
+                </tbody>
+              </table>
+            `;
+          container.innerHTML = html;
+        } else {
+          container.innerHTML = `<div class="text-gray-400">No status breakdown available.</div>`;
+        }
+
+
+        // Refresh charts
+        document.getElementById("responseTimeChart").innerHTML = "";
+        new Chartkick.PieChart("responseTimeChart", [
+          [`Breached (${data.response_breached_tickets_last_30_days})`, data.response_breached_tickets_last_30_days],
+          [`Not Breached (${data.not_response_breached_tickets_last_30_days})`, data.not_response_breached_tickets_last_30_days]
+        ], { colors: ["#ff0000", "#36a2eb"] });
+
+        // Refresh charts
+        document.getElementById("responseOpenClosedTimeChart").innerHTML = "";
+        new Chartkick.PieChart("responseOpenClosedTimeChart", [
+          [`Closed (${data.response_breached_tickets_closed_last_30_days})`, data.response_breached_tickets_closed_last_30_days],
+          [`Open (${data.response_breached_tickets_open_last_30_days})`, data.response_breached_tickets_open_last_30_days]
+        ], { colors: ["#36a2eb", "#ff0000"] });
+
+        document.getElementById("resolutionOpenClosedTimeChart").innerHTML = "";
+        new Chartkick.PieChart("resolutionOpenClosedTimeChart", [
+          [`Closed (${data.resolution_breached_closed_last_30_days})`, data.resolution_breached_closed_last_30_days],
+          [`Open (${data.resolution_breached_open_last_30_days})`, data.resolution_breached_open_last_30_days]
+        ], { colors: ["#36a2eb", "#ff0000"] });
+
+        document.getElementById("resolutionTimeChart").innerHTML = "";
+        new Chartkick.PieChart("resolutionTimeChart", [
+          [`Breached (${data.resolution_breached_tickets_last_30_days})`, data.resolution_breached_tickets_last_30_days],
+          [`Not Breached (${data.not_resolution_breached_tickets_last_30_days})`, data.not_resolution_breached_tickets_last_30_days]
+        ], { colors: ["#ff0000", "#36a2eb"] });
+
+        // Generate Assignee Breached Tickets Pie Chart
+        // Generate Assignee Breached Tickets Pie Chart
+        document.getElementById("breachedTicketsAssigneeChart").innerHTML = "";
+        let assigneeData = Object.entries(data.breached_tickets_per_assignee)
+          .map(([name, count]) => {
+            let formattedName = String(name).replace(/[\[\]"]/g, ''); // Remove brackets and quotes
+            return [`${formattedName} (${count})`, count];
+          })
+          .sort((a, b) => b[1] - a[1]); // Sort by count in descending order
+
+        new Chartkick.PieChart("breachedTicketsAssigneeChart", assigneeData, {
+          legend: "right" // Move the legend to the right side
+        });
+
+        document.getElementById("breachedResolvedTicketsAssigneeChart").innerHTML = "";
+        if (data.breached_tickets_resolved_per_assignee) {
+          let assigneeData = Object.entries(data.breached_tickets_resolved_per_assignee)
+            .map(([name, count]) => {
+              let formattedName = String(name).replace(/[\[\]"]/g, '');
+              return [`${formattedName} (${count})`, count];
+            })
+            .sort((a, b) => b[1] - a[1]); // Sort by count in descending order
+
+          new Chartkick.PieChart("breachedResolvedTicketsAssigneeChart", assigneeData, {
+            legend: "right"
+          });
+        }
+
+        document.getElementById("resolutionTimeChartAssignee").innerHTML = "";
+        if (data.breached_resolution_tickets_per_project) {
+          let assigneeResolutionData = Object.entries(data.breached_resolution_tickets_per_project)
+            .map(([name, count]) => {
+              let formattedName = String(name).replace(/[\[\]"]/g, '');
+              return [`${formattedName} (${count} ticket(s))`, count];
+            })
+            .sort((a, b) => b[1] - a[1]); // Sort by count in descending order
+
+          new Chartkick.PieChart("resolutionTimeChartAssignee", assigneeResolutionData, {
+            legend: "right"
+          });
+        }
+
+        document.getElementById("resolutionResolvedTimeChartAssignee").innerHTML = "";
+        if (data.breached_resolution_resolved_tickets_per_project) {
+          let assigneeResolvedData = Object.entries(data.breached_resolution_resolved_tickets_per_project)
+            .map(([name, count]) => {
+              let formattedName = String(name).replace(/[\[\]"]/g, '');
+              return [`${formattedName} (${count} ticket(s))`, count];
+            })
+            .sort((a, b) => b[1] - a[1]); // Sort by count in descending order
+
+          new Chartkick.PieChart("resolutionResolvedTimeChartAssignee", assigneeResolvedData, {
+            legend: "right"
+          });
+        }
+      })
+      .catch(error => console.error("Error fetching stats:", error));
+  }
+
+  document.addEventListener("click", function(event) {
+    let searchInput = document.getElementById("search");
+    let dropdown = document.getElementById("dropdown");
+    if (!searchInput.contains(event.target) && !dropdown.contains(event.target)) {
+      dropdown.classList.add("hidden");
+    }
+  });
+
+  function openModal() {
+    document.getElementById("ticketModal").classList.remove("hidden");
+  }
+
+  function closeModal() {
+    document.getElementById("ticketModal").classList.add("hidden");
+  }
+
+  function fetchTicketDetails(teamName, type) {
+    if (!selectedTeam) {
+      alert("Please select a team first.");
+      return;
+    }
+
+    fetch(`/dashboards/tickets?team_name=${teamName}&type=${type}`)
+      .then(response => response.json())
+      .then(data => {
+        const ticketDetailsContainer = document.getElementById("ticketDetails");
+        ticketDetailsContainer.innerHTML = "";
+
+        if (data.length > 0) {
+          let count = 0;
+          data.forEach(ticket => {
+            count++;
+            const ticketElement = document.createElement("tr");
+            ticketElement.classList.add("mb-4", "p-4", "rounded-lg", "bg-white", "border-b", "dark:bg-gray-800", "dark:border-gray-700", "hover:bg-gray-50", "dark:hover:bg-gray-600");
+            const ticketURL = `/project/${ticket.project_id}/tickets/${ticket.id}`;
+            let priorityClass = "";
+
+            switch (ticket.priority) {
+              case "SEVERITY 1":
+                priorityClass = "bg-red-900";
+                break;
+              case "SEVERITY 2":
+                priorityClass = "bg-red-600";
+                break;
+              case "SEVERITY 3":
+                priorityClass = "bg-yellow-500";
+                break;
+              default:
+                priorityClass = "bg-blue-500";
+            }
+
+            switch (ticket.status_name) {
+              case "Resolved":
+                statusClass = "bg-green-500 border-green-600 text-white";
+                break;
+              case "Closed":
+                statusClass = "bg-gray-800 border-gray-900 text-white";
+                break;
+              case "Reopened":
+                statusClass = "bg-red-900 border-red-800 text-white";
+                break;
+              case "New":
+                statusClass = "bg-red-500 border-red-600 text-white";
+                break;
+              case "Under Development":
+                statusClass = "bg-yellow-500 border-yellow-600 text-white";
+                break;
+              case "Work in Progress":
+                statusClass = "bg-gray-500 border-gray-600 text-white";
+                break;
+              case "QA Testing":
+                statusClass = "bg-pink-500 border-pink-600 text-white";
+                break;
+              case "Awaiting Build":
+                statusClass = "border-black dark:border-slate-100 text-black";
+                break;
+              case "Client Confirmation Pending":
+                statusClass = "bg-purple-500 border-purple-600 text-white";
+                break;
+              case "On-Hold":
+                statusClass = "bg-yellow-300 border-yellow-400 text-black";
+                break;
+              case "Assigned":
+                statusClass = "bg-blue-800 border-blue-900 text-white";
+                break;
+              case "Approved":
+                statusClass = "bg-green-800 border-green-900 text-white";
+                break;
+              case "Pending":
+                statusClass = "bg-gradient-to-r from-green-800 to-black border-green-900 text-white";
+                break;
+              case "Declined":
+                statusClass = "bg-gray-800 border-gray-900 text-white";
+                break;
+              default:
+                statusClass = "bg-blue-500 text-white";
+            }
+
+            ticketElement.innerHTML = `
+              <td class="p-2">${count}</td>
+              <td class="p-2 text-gray-500">
+                ${new Date(ticket.created_at).toLocaleString()}
+              </td>
+              <td class="p-2">${ticket.unique_id}</td>
+              <td class="p-2">${ticket.issue}</td>
+              <td class="p-2">
+                <p class="${priorityClass} p-1 text-center text-white font-bold rounded">
+                  ${ticket.priority}
+                </p>
+              </td>
+              <td class="p-2">${ticket.subject}</td>
+              <td class="p-2">${ticket.user_name}</td>
+              <td class="p-2">
+                <p class="${statusClass} text-center font-semibold rounded p-1 border-r-2 border-b-4">
+                  ${ticket.status_name}
+                </p>
+              </td>
+              <td class="p-2">
+                <a href="${ticketURL}" class="text-blue-500 hover:underline">View Ticket</a>
+              </td>
+            `;
+            ticketDetailsContainer.appendChild(ticketElement);
+          });
+        } else {
+          ticketDetailsContainer.innerHTML = "<p>No tickets found.</p>";
+        }
+
+        openModal();
+      })
+      .catch(error => console.error("Error fetching ticket details:", error));
+  }
+
+  document.querySelectorAll(".stat-card-link").forEach(link => {
+    link.addEventListener("click", function(event) {
+      event.preventDefault();
+      const teamName = selectedTeam;
+      const type = this.dataset.type;
+      fetchTicketDetails(teamName, type);
+    });
+  });
+</script>

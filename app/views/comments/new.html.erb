@@ -1,0 +1,5 @@
+<%= turbo_frame_tag 'modal' do %>
+  <div class="modal h-[80%]">
+    <%= render 'comments/form', project: @project, ticket: @ticket %>
+  </div>
+<% end %>

@@ -1,0 +1,105 @@
+<div>
+  <% if current_user.has_role? :admin or current_user.has_role?('project manager') or current_user.has_role?(:agent)%>
+    <p class="font-bold">
+      Time Created:
+      <span class="font-extralight">
+        <%= @ticket.created_at.strftime("%d %b %Y at %I:%M %p") %>
+      </span>
+    </p>
+    <p class="font-bold">
+      Target Response Time:
+      <span class="font-extralight">
+        <%= @ticket.initial_response_deadline.strftime("%d %b %Y at %I:%M %p") %>
+      </span>
+    </p>
+    <p class="font-bold">
+      Target Repair Time:
+      <span class="font-extralight">
+        <%= @ticket.target_repair_deadline.strftime("%d %b %Y at %I:%M %p") %>
+      </span>
+    </p>
+    <p class="font-bold">
+      Target Resolution Time:
+      <span class="font-extralight">
+        <%= @ticket.resolution_deadline.strftime("%d %b %Y at %I:%M %p") %>
+      </span>
+    </p>
+<!--
+    <p class="font-bold">
+      SLA Initial Response Deadline Breached:
+      <span class="font-extralight">
+        <%# if @ticket.initial_response_deadline > DateTime.now %>
+
+        <%# else %>
+
+        <%# end %>
+      </span>
+
+
+      <span class="font-extralight">
+        <%# if @ticket.initial_response_deadline > DateTime.now %>
+          <%#= distance_of_time_in_words(DateTime.now, @ticket.initial_response_deadline) %>
+        <%# else %>
+          <%#= distance_of_time_in_words(@ticket.initial_response_deadline, DateTime.now) %>
+        <%# end %>
+
+        <%# if @ticket.initial_response_deadline > DateTime.now || @ticket.updated_at > DateTime.now %>
+          <%#= distance_of_time_in_words(DateTime.now, [@ticket.initial_response_deadline, @ticket.updated_at].max) %>
+        <%# else %>
+          <%#= distance_of_time_in_words([@ticket.initial_response_deadline, @ticket.updated_at].max, DateTime.now) %>
+        <%# end %>
+
+      </span>
+
+
+    </p>
+    -->
+
+
+    <p>
+      <span class="font-bold capitalize">
+        Target Response Time SLA Status:
+      </span>
+      <span class="font-extralight">
+        <% if @sla_ticket.present? %>
+          <%= @sla_ticket.sla_status %>
+        <% end %>
+      </span>
+
+    </p>
+
+    <p>
+      <span class="font-bold">
+        Target Repair Time SLA Status:
+      </span>
+      <span class="font-extralight">
+        <% if @sla_ticket.present? %>
+          <%= @sla_ticket.sla_target_response_deadline %>
+        <% end %>
+      </span>
+
+    </p>
+    <p>
+      <span class="font-bold">
+        Target Resolution Time SLA Status:
+      </span>
+      <span class="font-extralight">
+        <% if @sla_ticket.present? %>
+          <%= @sla_ticket.sla_resolution_deadline %>
+        <% end %>
+      </span>
+
+    </p>
+  <% end %>
+  <p>
+      <span class="font-bold">
+        Target Due Date:
+      </span>
+      <span class="font-extralight">
+        <% if @ticket.due_date.present? %>
+          <%= @ticket.due_date %> (<%= distance_of_time_in_words(DateTime.now, @ticket.due_date) %>)
+        <% end %>
+      </span>
+
+    </p>
+</div>

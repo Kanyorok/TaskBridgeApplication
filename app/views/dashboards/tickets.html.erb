@@ -1,0 +1,7 @@
+
+<h1>Tickets</h1>
+<ul>
+  <% @tickets.each do |ticket| %>
+    <li><%= ticket.issue %> - <%#= ticket.created_at %></li>
+  <% end %>
+</ul>

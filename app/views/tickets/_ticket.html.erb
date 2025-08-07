@@ -1,0 +1,163 @@
+<div class="w-full">
+  <%= render 'tickets/search_q' %>
+
+  <div class="overflow-x-auto h-full">
+    <table class="min-w-full divide-y" aria-label="Tickets Table">
+      <thead>
+      <%= render partial: "tickets/ticket_table_headers" %>
+      </thead>
+      <tbody class="text-sm">
+      <% @ticket.each do |ticket| %>
+        <% if ticket.present? %>
+          <tr class="<%= case ticket.issue
+                         when 'SUPPORT' then 'bg-[#007ACC]'
+                         when 'NEW FEATURE' then 'bg-[#00B894]'
+                         when 'BUG' then 'bg-[#E53935]'
+                         when 'REQUEST' then 'bg-[#6c5CE7]'
+                         when 'INCIDENT' then 'bg-[#F39C12]'
+                         when 'CHANGE REQUEST' then 'bg-[#2ECC71]'
+                         else ''
+                         end %>">
+            <!-- Date -->
+            <td class="px-2 py-2 whitespace-nowrap">
+              <%= link_to ticket.created_at.strftime("%d %b %Y"), project_ticket_path(ticket.project, ticket) %>
+            </td>
+
+            <!-- Ticket ID -->
+            <td class="px-4 py-4 whitespace-nowrap font-medium uppercase">
+              <% if ticket.unique_id.present? %>
+                <%= link_to ticket.unique_id, project_ticket_path(ticket.project, ticket) %>
+              <% end %>
+            </td>
+
+            <!-- Issue Type -->
+            <td class="px-4 py-4 whitespace-nowrap">
+              <%= link_to ticket.issue, project_ticket_path(ticket.project, ticket) %>
+            </td>
+
+            <!-- Severity -->
+            <td class="px-4 py-4 whitespace-nowrap">
+              <%= render partial: 'tickets/priority_severity', locals: { ticket: ticket } %>
+            </td>
+
+            <!-- Summary -->
+            <td class="px-4 py-4 grid grid-cols-[auto_1fr_auto] items-center gap-3 sm:gap-4">
+              <%= render partial: 'tickets/summary', locals: { ticket: ticket } %>
+            </td>
+
+            <!-- Assigned To -->
+            <td class="px-4 py-4 whitespace-nowrap">
+              <div class="flex flex-col gap-2">
+                <% ticket.users.each do |user| %>
+                  <% if user.name.present? %>
+                      <span class="font-medium"><%= user.name %></span>
+                      <span class="font-semibold">
+                        <% if user.teams.any? %>
+                          (<%= user.teams.map(&:name).join(', ') %>)
+                        <% else %>
+                          (No Team Assigned)
+                        <% end %>
+                      </span>
+                  <% end %>
+                <% end %>
+              </div>
+            </td>
+
+            <!-- Status -->
+            <td class="px-4 py-4 whitespace-nowrap">
+              <%= render partial: 'tickets/ticket_status', locals: { ticket: ticket }  %>
+            </td>
+
+            <!-- Progress Bar -->
+            <td class="px-4 py-4 whitespace-nowrap">
+              <%= render partial: 'tickets/progress_bar', locals: { ticket: ticket } %>
+            </td>
+
+            <!-- Reported By -->
+            <td class="px-4 py-4 whitespace-nowrap">
+              <% if ticket.user.name.present? %>
+                <%= ticket.user.name %>
+              <% end %>
+            </td>
+
+            <!-- Last Updated -->
+            <td class="px-4 py-4 whitespace-nowrap text-sm">
+              <% if ticket.add_statuses.present? %>
+                <%= ticket.add_statuses.first.updated_at.strftime('%H:%M %d %b %Y') %>
+              <% end %>
+            </td>
+
+            <!-- Actions -->
+            <td class="px-4 py-4 whitespace-nowrap font-medium" data-controller="dropdown" data-dropdown-ticket-id-value="<%= ticket.id %>">
+              <%= render partial: 'tickets/action_dropdown', locals: { ticket: ticket } %>
+            </td>
+
+            <% if current_user.has_role?(:admin) || current_user.has_role?(:agent) || current_user.has_role?('project manager') %>
+              <td class="px-4 py-4 whitespace-nowrap text-sm text-center hide-on-sidebar">
+                <%= ticket.update_count %>
+              </td>
+              <td class="px-4 py-4 whitespace-nowrap text-sm text-center hide-on-sidebar">
+                <%= ticket.last_updated_at ? ticket.last_updated_at.strftime("%T") : 'Never' %>
+              </td>
+            <% end %>
+          </tr>
+        <% end %>
+      <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  document.addEventListener("turbo:load", function() {
+    const sidebar = document.getElementById("sidebar");
+    const tableColumns = document.querySelectorAll(".hide-on-sidebar");
+
+    function toggleColumns() {
+      const isExpanded = sidebar && sidebar.classList.contains("w-64");
+      tableColumns.forEach(col => {
+        col.style.display = isExpanded ? "none" : "table-cell";
+      });
+    }
+
+    if (sidebar) {
+      toggleColumns();
+      const observer = new MutationObserver(toggleColumns);
+      observer.observe(sidebar, { attributes: true, attributeFilter: ['class'] });
+    }
+
+    document.querySelectorAll("th[scope='col']").forEach(header => {
+      header.addEventListener("click", function() {
+        const table = this.closest("table");
+        const headerIndex = Array.from(this.parentElement.children).indexOf(this);
+        const tbody = table.querySelector("tbody");
+        const rows = Array.from(tbody.querySelectorAll("tr"));
+        const isAscending = !this.classList.contains("asc");
+        table.querySelectorAll("th[scope='col']").forEach(h => {
+          h.classList.remove("asc", "desc");
+        });
+
+        this.classList.add(isAscending ? "asc" : "desc");
+
+        rows.sort((rowA, rowB) => {
+          const cellA = rowA.children[headerIndex].textContent.trim();
+          const cellB = rowB.children[headerIndex].textContent.trim();
+
+          if (!isNaN(cellA)) {
+            return isAscending ? cellA - cellB : cellB - cellA;
+          }
+
+          const dateA = Date.parse(cellA);
+          const dateB = Date.parse(cellB);
+          if (!isNaN(dateA)) {
+            return isAscending ? dateA - dateB : dateB - dateA;
+          }
+
+          return isAscending ? cellA.localeCompare(cellB) : cellB.localeCompare(cellA);
+        });
+
+        rows.forEach(row => tbody.appendChild(row));
+      });
+    });
+  });
+</script>

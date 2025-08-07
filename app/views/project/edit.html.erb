@@ -1,0 +1,78 @@
+  <% provide(:title, "Edit Support Desk: #{@project.title}") %>
+
+  <%= render 'project/new_back' %>
+  <%= form_with  model: @project, url: project_path(@project), method: :patch do |f| %>
+    <div class="md:gap-6">
+      <div class="grid grid-cols-2 gap-2">
+        <div class="relative z-0 w-full mb-6 group">
+          <%= f.label :title, ('Title *'), class: "capitalize block mb-1 text-sm font-medium text-gray-900 dark:text-white", required: true  %><br />
+          <%= f.text_field :title, class: "border border-gray-300 rounded-md focus:ring-primary-600 focus:border-primary-600 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500", placeholder: '', required: true %>
+        </div>
+        <div class="relative z-0 w-full mb-6 group">
+          <%= f.label :image, 'Current Image *', class: "capitalize block mb-1 text-sm font-medium"  %><br />
+          <%= image_tag f.object.image if f.object.image.present?%>
+          <%= image_tag f.object.image, width: 24 if f.object.image.present? %>
+        </div>
+        <div class="relative z-0 w-full mb-6 group">
+          <%= f.label :title, ('Profile Picture'), class: "capitalize block mb-1 text-sm font-medium text-gray-900 dark:text-white", required: true  %><br />
+          <%= f.file_field :image, class: "border border-gray-300 rounded-md focus:ring-primary-600 focus:border-primary-600 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500", placeholder: '' %>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2">
+        <div class="relative z-0 w-full mb-6 group">
+          <%= f.label :title, ('Project Description *'), class: "capitalize block mb-1 text-sm font-medium"  %><br />
+          <%= f.text_field :description, class: "border border-gray-300 rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500", placeholder: '', required: true %>
+        </div>
+        <div class="relative z-0 w-full mb-6 group">
+          <%= f.label :Assignee, ('Assignee *'), class: "capitalize block mb-1 text-sm font-medium text-gray-900 dark:text-white"  %><br />
+          <%= f.select :user_id, User.with_agent_project_manager_role.order(:first_name, :last_name).map { |user| [user.name, user.id] }, {},class: "border border-gray-300 rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500", placeholder: 'Assign User', required: true %>
+        </div>
+        <div class="relative z-0 w-full mb-6 group">
+          <%= f.label :categories, ('Product Categories *'), class: "capitalize block mb-1 text-sm font-medium" %>
+          <%= f.collection_select :software_ids, Software.all, :id, :name,
+                                  { prompt: "Select Product", include_hidden: false },
+                                  class: "border border-gray-300 rounded-md focus:ring-primary-600 focus:border-primary-600 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500",
+                                  data: { action: "change->form#updateGroupwareOptions" },
+                                  multiple: true %>
+        </div>
+        <div class="relative z-0 w-full mb-6 group">
+          <%= f.label :categories, ('Sub Categories *'), class: "capitalize block mb-1 text-sm font-medium" %>
+          <%= f.collection_select :groupware_ids, @project.groupwares.where(software_id: @project.software_ids), :id, :name,
+                                  { prompt: "Select Sub Product", include_hidden: false },
+                                  class: "border border-gray-300 rounded-md focus:ring-primary-600 focus:border-primary-600 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500",
+                                  id: "groupware-select",
+                                  multiple: true %>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-2">
+        <div class="relative z-0 w-full mb-6 group">
+          <%= f.label :client, ('Client Available *'), class: "capitalize block mb-6 text-sm font-medium" %>
+          <%= f.collection_select :client_id, Client.all, :id, :name, { prompt: "Select Client" }, class: "border border-gray-300 rounded-md focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500", required: true %>
+        </div>
+        <div class="relative z-0 w-full mb-6 group">
+          <%= f.label :start_date, 'Start Date *', class: "capitalize block mb-1 text-sm font-medium"  %><br />
+          <%= f.date_field :start_date, class: "border border-gray-300 rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500", placeholder: '', required: true %>
+        </div>
+        <div class="flex items-center mb-6">
+          <%= f.label :special, 'Special Service *', class: "capitalize block mb-1 text-sm font-bold mr-3 text-red" %>
+          <%= f.check_box :special, class: "mr-2" %>
+        </div>
+      </div>
+      <div class="relative z-0 w-full mb-6 group">
+        <%= f.label :title, ('Subject *'), class: "capitalize block mb-1 text-sm font-medium" %><br />
+        <div data-controller="text-limit" data-text-limit-limit-value="1200">
+          <p id="char-count">0/1200</p>
+          <%= f.rich_text_area :content, id: "content",
+                               data: { text_limit_target: "content" },
+                               class: "min-h-[300px] #{'border-red-500' if @project.errors[:content].any?}",
+                               required: true %>
+          <% if @project.errors[:content].any? %>
+            <p class="text-red-500"><%= @project.errors[:content].join(', ') %></p>
+          <% end %>
+        </div>
+      </div>
+    </div>
+    <%= f.submit  class: 'mb-4 h-12 bg-[#3F8CFF] hover:bg-[#3A81EB] p-2 rounded-md font-bold rounded-lg text-slate-100'   %>
+  <% end %>
+

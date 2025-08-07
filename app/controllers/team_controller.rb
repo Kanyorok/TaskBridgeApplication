@@ -1,0 +1,94 @@
+class TeamController < ApplicationController
+  before_action :authenticate_user!
+  before_action :set_team, only: %i[show edit update destroy show_team_member]
+  load_and_authorize_resource
+
+  def index
+    @per_page = 10
+    @page = (params[:page] || 1).to_i
+
+    @team = if params[:query].present?
+              Team.where('name ILIKE :query OR description ILIKE :query', query: "%#{params[:query]}%")
+            else
+              Team.all.order('created_at DESC')
+            end
+    @total_pages = (@team.count / @per_page.to_f).ceil
+    @team = @team.offset((@page - 1) * @per_page).limit(@per_page)
+  end
+
+  def show
+    @assigned_today_counts = {}
+    @team.users.each do |user|
+      @assigned_today_counts[user.id] = user.tickets
+        .joins(:statuses)
+        .where.not(statuses: { name: %w[Closed Resolved Declined] })
+        .count
+    end
+
+    @closed_today_counts = {}
+    @team.users.each do |user|
+      @closed_today_counts[user.id] = user.tickets
+        .joins(:statuses)
+        .where(statuses: { name: %w[Closed Resolved], created_at: Date.today.all_day })
+        .count
+    end
+  end
+
+  # show tickets assigned to the team users both open and closed and their service desk
+  def show_team_member
+    @user = @team.users.find(params[:user_id])
+    @open_tickets = @user.tickets
+      .joins(:statuses)
+      .where.not(statuses: { name: %w[Closed Resolved Declined] })
+      .distinct
+    @closed_tickets = @user.tickets
+      .joins(:statuses)
+      .where(statuses: { name: %w[Closed Resolved], created_at: Date.today.all_day })
+      .distinct
+  end
+
+  def new
+    @team = Team.new
+  end
+
+  def create
+    @team = Team.new(team_params)
+
+    respond_to do |format|
+      if @team.save
+        format.html { redirect_to team_index_path, notice: 'Team was successfully created.' }
+      else
+        format.html { render :new, status: :unprocessable_entity }
+      end
+    end
+  end
+
+  def edit; end
+
+  def update
+    respond_to do |format|
+      if @team.update(team_params)
+        format.html { redirect_to team_index_path, notice: 'Team was successfully updated.' }
+      else
+        format.html { render :edit, status: :unprocessable_entity }
+      end
+    end
+  end
+
+  def destroy
+    @team.destroy
+    respond_to do |format|
+      format.html { redirect_to team_path, notice: 'Team was successfully deleted.' }
+    end
+  end
+
+  private
+
+  def set_team
+    @team = Team.find(params[:id])
+  end
+
+  def team_params
+    params.require(:team).permit(:name, :description, user_ids: [])
+  end
+end

@@ -1,0 +1,32 @@
+<%= form_for(resource, as: resource_name, url: invitation_path(resource_name), html: { method: :put }) do |f| %>
+  <section class="mx-auto pr-64">
+    <div class="flex flex-col items-center justify-center px-6 py-8 mx-auto md:h-screen lg:py-0 w-[600px]">
+      <a href="#" class="flex items-center mb-6 text-2xl font-semibold">
+        <%= image_tag 'logo.png', class: 'w-72 hidden dark:block' %>
+        <%= image_tag 'logo-white-bg.png', class: 'w-72 block dark:hidden' %>
+      </a>
+      <div class="w-full bg-white rounded-lg shadow dark:border md:mt-0 sm:max-w-md xl:p-0 dark:bg-gray-800 dark:border-gray-700">
+        <div class="p-6 space-y-4 md:space-y-6 sm:p-8">
+          <h1 class="text-xl font-bold leading-tight tracking-tight  md:text-2xl ">
+            <%= t "devise.invitations.edit.header" %>
+          </h1>
+          <%= render "devise/shared/error_messages", resource: resource %>
+          <%= f.hidden_field :invitation_token, readonly: true %>
+          <% if f.object.class.require_password_on_accepting %>
+            <div class="field">
+              <%= f.label ('Password*') %><br />
+              <%= f.password_field :password, placeholder: '••••••••', class: " h-12 border border-[#3F8CFF] hover:border-[#3A81EB] border-2 rounded-lg w-full dark:bg-gray-700", required: true %>
+            </div>
+            <div class="field">
+              <%= f.label ('Password Confirm*') %><br />
+              <%= f.password_field :password_confirmation, placeholder: '••••••••', class: " h-12 border border-[#3F8CFF] hover:border-[#3A81EB] border-2 rounded-lg w-full dark:bg-gray-700", required: true %>
+            </div>
+          <% end %>
+          <div class="actions">
+            <%= f.submit t("devise.invitations.edit.submit_button"), class: 'mb-4 h-12 bg-[#3F8CFF] hover:bg-[#3A81EB] p-3 rounded font-bold rounded-lg text-slate-100 w-full' %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+<% end %>

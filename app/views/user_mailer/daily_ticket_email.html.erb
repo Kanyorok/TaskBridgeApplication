@@ -1,0 +1,84 @@
+<!-- app/views/report_mailer/daily_ticket_email.html.erb -->
+<% if @tickets.any? %>
+  <style>
+      body {
+          font-family: Arial, sans-serif;
+          color: #333;
+      }
+      h1 {
+          color: #2c3e50;
+      }
+      table {
+          width: 100%;
+          border-collapse: collapse;
+          margin-top: 20px;
+      }
+      th, td {
+          padding: 10px;
+          text-align: left;
+      }
+      th {
+          background-color: #f2f2f2;
+          border-bottom: 2px solid #ddd;
+      }
+      tr:nth-child(even) {
+          background-color: #f9f9f9;
+      }
+      a {
+          color: #1a73e8;
+          text-decoration: none;
+      }
+      a:hover {
+          text-decoration: underline;
+      }
+  </style>
+
+  <h1>Daily Ticket Summary</h1>
+  <p>Hello <strong><%= @user.name %></strong>,</p>
+
+  <p>Below is a summary of the tickets you <strong>Closed</strong>, <strong>Resolved</strong>, or <strong>Declined</strong> in the last 24 hours:</p>
+
+  <table border="1">
+    <thead>
+    <tr>
+      <th>Issue Key</th>
+      <th>Service Desk</th>
+      <th>Summary</th>
+      <th>Status</th>
+    </tr>
+    </thead>
+    <tbody>
+    <% @tickets.each do |ticket| %>
+      <tr>
+        <td>
+          <%= link_to ticket.unique_id, project_ticket_url(ticket.project, ticket), target: '_blank' %>
+        </td>
+        <td><%= ticket.project.title %></td>
+        <td><%= ticket.subject %></td>
+        <td><%= ticket.statuses.first&.name || 'N/A' %></td>
+      </tr>
+    <% end %>
+    </tbody>
+  </table>
+
+  <p style="margin-top: 30px;">Thank you for your continued efforts.</p>
+  <p>Best regards,<br><strong>TaskBridge Support Team</strong></p>
+<% else %>
+  <style>
+      body {
+          font-family: Arial, sans-serif;
+          color: #333;
+      }
+      h1 {
+          color: #2c3e50;
+      }
+  </style>
+
+  <h1>Daily Ticket Summary</h1>
+  <p>Hello <strong><%= @user.name %></strong>,</p>
+
+  <p>You did not close, resolve, or decline any tickets in the last 24 hours.</p>
+
+  <p>Together we rise!</p>
+  <p>Best regards,<br><strong>TaskBridge Support Team</strong></p>
+<% end %>

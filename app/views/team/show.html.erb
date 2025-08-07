@@ -1,0 +1,46 @@
+<% provide(:title, "Details for team: #{@team.name}") %>
+
+<% if flash[:notice] %>
+  <div class="bg-[#1a237e] border border-[#4caf50] text-white px-4 py-3 rounded mb-4 shadow-md">
+    <p><%= flash[:notice] %></p>
+  </div>
+<% elsif flash[:alert] %>
+  <div class="bg-red-600 border border-red-400 text-white px-4 py-3 rounded mb-4 shadow-md">
+    <p><%= flash[:alert] %></p>
+  </div>
+<% end %>
+
+<div class="overflow-x-auto shadow-md sm:rounded-lg">
+  <table class="w-full text-sm text-left rtl:text-right text-gray-900 dark:text-gray-400">
+    <thead class="text-xs uppercase bg-gray-200 dark:bg-gray-700 dark:text-gray-400">
+    <tr>
+      <th scope="col" class="px-4 py-2">Name of Person</th>
+      <th scope="col" class="px-4 px-2">Tickets Open</th>
+      <th scope="col" class="px-4 px-2">Tickets Closed Today</th>
+      <th scope="col" class="px-4 px-2">Projects Assigned</th>
+      <th scope="col" class="px-4 px-2">View</th>
+    </tr>
+    </thead>
+    <tbody>
+    <% @team.users.each do |user| %>
+      <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 h-12 text-center">
+        <td class="px-4 py-4 font-medium text-left">
+          <p class="text-gray-700 dark:text-gray-300"><%= user.name %></p>
+        </td>
+        <td class="px-4 py-4 text-left">
+          <%= @assigned_today_counts[user.id] %>
+        </td>
+        <td class="px-4 py-4 text-left">
+          <%= @closed_today_counts[user.id] %>
+        </td>
+        <td class="px-4 py-4 text-left">
+          <%= user.projects.count %>
+        </td>
+        <td class="px-4 py-4 text-left">
+          <%= link_to 'View', show_team_member_team_path(@team, user_id: user.id), class: 'bg-[#3F8CFF] hover:bg-[#3A81EB] p-2 rounded font-bold rounded-lg text-slate-100' %>
+        </td>
+      </tr>
+    <% end %>
+    </tbody>
+  </table>
+</div>

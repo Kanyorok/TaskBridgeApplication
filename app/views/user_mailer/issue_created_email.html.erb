@@ -1,0 +1,20 @@
+
+<p>Hello <%= @user.first_name %> <%= @user.last_name %>,</p>
+
+<p><strong>Ticket Details:</strong></p>
+<ul>
+  <li><strong>Service Desk Name:</strong> <span class="capitalize"><%= @project.title %></span></li>
+  <li><strong>Ticket ID:</strong> <%= @ticket.unique_id %></li>
+  <li><strong>Subject:</strong> <%= @ticket.subject %></li>
+  <li><strong>Ticket Type:</strong> <%= @ticket.issue %></li>
+  <li><strong>Priority:</strong> <%= @ticket.priority %></li>
+  <li><strong>Description:</strong> <%= @ticket.content.to_plain_text.truncate(3000) %></li>
+</ul>
+
+<p>The ticket a new message </p>
+<%= @issue.content %>
+
+<p>Click <a href="<%= @url %>">here</a> to view the ticket.</p>
+
+<p>Best regards,</p>
+<p><%= @current_user.name %></p>

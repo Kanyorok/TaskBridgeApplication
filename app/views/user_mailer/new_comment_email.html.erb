@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta content="text/html; charset=UTF-8" http-equiv="Content-Type" />
+</head>
+<body>
+<h1>Hello, <%= @user.name %></h1>
+
+<p><strong>Issue:</strong> <%= @comment.what %> for service desk <%= @project.title %></p>
+
+<ul>
+  <li><strong>Ticket ID:</strong> <%= @ticket.unique_id %></li>
+  <li><strong>Subject:</strong> <%= @ticket.subject %></li>
+  <li><strong>Ticket Type:</strong> <%= @ticket.issue %></li>
+  <li><strong>Priority:</strong> <%= @ticket.priority %></li>
+  <li><strong>Description:</strong> <%= @ticket.content.to_plain_text.truncate(3000) %></li>
+</ul>
+
+
+<p><strong>Reason for the Issue and Our Solution:</strong></p>
+
+
+<div>
+  <%= @comment.content %>
+</div>
+
+<p>Click <a href="<%= @url %>">here</a> to view the comment.</p>
+
+<p>Best regards,</p>
+<p>Your Team</p>
+<p><%= @current_user.name %></p>
+</body>
+</html>

@@ -1,0 +1,31 @@
+<div class="p-2">
+  <div class="flex flex-nowrap gap-2 md:gap-4 overflow-x-auto">
+  <% @boards.each do |board| %>
+  <% tasks_for_board = @filtered_tasks_by_board[board.id] || [] %>
+    <div class="bg-white rounded px-2 py-2 min-w-[300px] md:min-w-[400px]">
+      <!-- Board category header -->
+      <div class="flex justify-between items-center mb-2 mx-1 bg-gray-400 p-1 rounded min-w-[200px]">
+        <div class="flex items-center">
+          <h2 class="text-xs px-1 rounded capitalize">
+            <%= board.status %> 
+          </h2>
+        </div>
+
+        <% unless current_user.has_role?(:client) %>
+        <div class="flex flex-wrap">
+          <%= link_to new_product_task_path(@product.id) do %>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 7.5h-.75A2.25 2.25 0 0 0 4.5 9.75v7.5a2.25 2.25 0 0 0 2.25 2.25h7.5a2.25 2.25 0 0 0 2.25-2.25v-7.5a2.25 2.25 0 0 0-2.25-2.25h-.75m-6 3.75 3 3m0 0 3-3m-3 3V1.5m6 9h.75a2.25 2.25 0 0 1 2.25 2.25v7.5a2.25 2.25 0 0 1-2.25 2.25h-7.5a2.25 2.25 0 0 1-2.25-2.25v-.75" />
+            </svg>
+          <% end %>
+
+        </div>
+        <% end %>
+      </div>
+
+      <%= render partial: 'boards/display_board', locals: { board: board, tasks: tasks_for_board } %>
+    </div>
+  <% end %>
+</div>
+
+</div>

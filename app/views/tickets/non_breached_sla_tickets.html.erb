@@ -1,0 +1,63 @@
+<table class="min-w-full bg-white dark:bg-gray-800">
+  <thead>
+  <tr>
+    <th class="py-2 px-4 border-b">ID</th>
+    <th class="py-2 px-4 border-b">Issue</th>
+    <th class="py-2 px-4 border-b">Priority</th>
+    <th class="py-2 px-4 border-b">Subject</th>
+    <th class="py-2 px-4 border-b">Actions</th>
+  </tr>
+  </thead>
+  <tbody>
+  <% @tickets.each do |ticket| %>
+    <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+      <td scope="row" class="px-2 py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white uppercase">
+        <div class="relative w-full flex justify-center">  
+          <%= link_to ticket.unique_id, project_ticket_path(ticket.project, ticket) if ticket.unique_id.present? %>
+        </div>
+      </td>
+      <td scope="row" class="px-2 py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+        <div class="relative w-full flex justify-center">  
+          <%= link_to ticket.issue, project_ticket_path(ticket.project, ticket) %>
+        </div>
+      </td>
+      
+      <!-- Priority and severity -->
+      <td class="px-2 py-2">
+        <div class="relative w-full flex justify-center">
+          <%= render partial: "tickets/priority_severity", locals: { ticket: ticket } %>
+        </div>
+      </td>
+
+      <!-- Ticket subject -->
+      <td class="px-2 py-2 truncate w-64">
+        <div class="relative w-full flex justify-start text-left">
+          <%= ticket.subject.truncate(50) if ticket.subject.present? %>
+        </div>
+      </td>
+
+      <!-- View button -->
+      <td class="px-2 py-2">
+        <div class="relative w-full flex justify-center">
+          <%= link_to 'VIEW', project_ticket_path(ticket.project, ticket), class: 'bg-[#3F8CFF] hover:bg-[#3A81EB] p-2 rounded font-bold rounded-md text-slate-100' %>
+        </div>
+      </td>
+      
+    </tr>
+  <% end %>
+  </tbody>
+</table>
+
+<!-- Pagination Links -->
+<div class="mt-4">
+  <% if @page > 1 %>
+    <%= link_to 'Previous', sla_breached_tickets_project_tickets_path(@project, page: @page - 1),
+                class: 'bg-blue-600 hover:bg-blue-500 px-4 rounded text-white text-sm font-semibold transition-all p-2 uppercase'
+    %>
+  <% end %>
+  <% if @page < @total_pages %>
+    <%= link_to 'Next', sla_breached_tickets_project_tickets_path(@project, page: @page + 1),
+                class: 'bg-blue-600 hover:bg-blue-500 px-4 rounded text-white text-sm font-semibold transition-all p-2 uppercase'
+    %>
+  <% end %>
+</div>

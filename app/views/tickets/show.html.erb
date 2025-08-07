@@ -1,0 +1,211 @@
+<% provide(:title, "Ticket: #{@ticket.subject} for Service Desk: #{@project.title}") %>
+
+<div class="p-2 container">
+  <!-- Topbar and Alert -->
+  <%= render 'issues/issue_topbar' %>
+  <%= render 'layouts/alert', class: "" %>
+
+  <!-- Ticket Information Section -->
+  <div class="grid md:grid-cols-5 md:items-center mt-4">
+    <div class="w-full col-span-4 h-full flex">
+      <div class="grid grid-cols-4">
+        <div class="col-span-4">
+          <div class="mb-2.5 font-bold capitalize">
+              <%= @ticket.subject %>
+          </div>
+          <div class="mb-2.5 flex flex-wrap">
+            <% if @ticket.content.present? %>
+              <span class="break-words overflow-hidden">
+                <%= sanitize raw (@ticket.content.to_trix_html.gsub(/\[.*?\]/, '').strip) %>
+                <% if @ticket.content.body.attachments.any? %>
+                  <% @ticket.content.body.attachments.each do |attachment| %>
+                    <div class="mb-2">
+                      <% if attachment.attachable.is_a?(ActionText::Attachables::RemoteImage) %>
+                        <a href="<%= attachment.attachable.url %>" download>
+                          <img src="<%= attachment.attachable.url %>" alt="Remote Image" class="max-w-xs cursor-pointer pl-2">
+                        </a>
+                        <br>
+                        <% if attachment.attachable.is_a?(ActiveStorage::Blob) %>
+                          <%= link_to attachment.attachable.filename.to_s, rails_blob_path(attachment.attachable, disposition: 'attachment', only_path: true), target: "_blank", download: true, class: "text-blue-600 hover:underline pl-2" %>
+                        <% end %>
+                      <% elsif attachment.attachable.is_a?(ActiveStorage::Blob) %>
+                        <% if attachment.attachable.previewable? %>
+                          <a href="<%= rails_blob_path(attachment.attachable, disposition: 'attachment', only_path: true) %>" download>
+                            <img src="<%= rails_representation_url(attachment.attachable.variant(resize_to_limit: [300, 300])) %>" alt="Attachment Preview" class="max-w-xs cursor-pointer pl-2">
+                          </a>
+                          <br>
+                          <%= link_to attachment.filename.to_s, rails_blob_path(attachment.attachable, only_path: true), target: "_blank", class: "text-blue-600 hover:underline pl-2" %>
+                        <% else %>
+                          <%= link_to attachment.filename.to_s, rails_blob_path(attachment.attachable, disposition: 'attachment', only_path: true), class: "text-blue-600 hover:underline pl-2" %>
+                        <% end %>
+                      <% else %>
+                        <p>Attachment: <%= attachment.filename.to_s %></p>
+                        <%= link_to attachment.filename.to_s, rails_blob_path(attachment.attachable, disposition: 'attachment', only_path: true), class: "text-blue-600 hover:underline pl-2" %>
+                      <% end %>
+                    </div>
+                  <% end %>
+                <% end %>
+              </span>
+            <% end %>
+
+            <%= render partial: 'tickets/communication_center' %>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="w-full col-span-1 h-full p-2">
+      <div class="mb-4 font-bold capitalize">
+        <% if @ticket.ticket_image.present? %>
+          <p> Click to Enlarge</p>
+          <%= image_tag @ticket.ticket_image, class: 'zoomable-image w-48 object-cover' %>
+        <% elsif @project.image.present? %>
+          <%= image_tag @project.image, class: 'w-16' %>
+        <% else %>
+          <%= image_tag 'default.png', class: 'w-16' %>
+        <% end %>
+      </div>
+      <div id="imageModal" class="modal" data-controller="image-modal" data-image-modal-target="modal">
+        <span class="close" data-action="click->image-modal#closeModal" data-image-modal-target="closeButton">&times;</span>
+        <img class="modal-content" id="fullImage" data-image-modal-target="modalImage" alt='show image'>
+      </div>
+
+
+      <div class="mb-2.5 font-bold capitalize flex">Status:
+        <span class="font-medium ml-1">
+          <%= render partial: 'tickets/ticket_status', locals: { ticket: @ticket } %>
+        </span>
+      </div>
+      <div class="mb-2.5 font-bold capitalize flex">
+        <% unless (@ticket.statuses.first&.name == 'Closed') && !current_user.has_role?(:admin) %>
+          <%= render 'tickets/ticket_action' %>
+        <% end %>
+      </div>
+
+      <div class="mb-2.5 font-bold capitalize flex">
+        <span class="font-medium ml-1">
+          <%= render 'tickets/ticket_software' %>
+        </span>
+      </div>
+
+      <%= render 'tickets/assign_people_tickets' %>
+
+      <% if @ticket.attachments.any? %>
+    <h3 class="text-lg font-bold mt-4">Attachments:</h3>
+    <% @ticket.attachments.each do |attachment| %>
+      <div class="mb-2">
+        <%= link_to attachment.filename.to_s, rails_blob_path(attachment, disposition: "inline"), target: "_blank", class: "text-blue-500 underline" %>
+        <%= link_to "Download", rails_blob_path(attachment, disposition: "attachment"), class: "ml-2 text-green-500 underline" %>
+      </div>
+    <% end %>
+  <% else %>
+    <p class="text-gray-500 italic">No attachments available.</p>
+  <% end %>
+      <div class="mb-2.5">
+      <%= render 'ticket_show_due_severity_issue' %>
+      </div>
+      <!-- SLA -->
+      <%= render 'sla' %>
+    </div>
+  </div>
+
+  <% @ticket.statuses.each do |status| %>
+    <% if current_user.has_role?(:client) &&  status.name == 'Closed' %>
+      <%= render 'tickets/ratings' %>
+    <% end %>
+  <% end %>
+  <% if current_user.has_role?(:agent) || current_user.has_role?(:admin) || current_user.has_role?('project manager') || current_user.has_role?(:observer) || current_user.has_role?(:client)%>
+    <div class="w-full">
+      <%= render 'tickets/timeline' %>
+    </div>
+  <% end %>
+</div>
+<style>
+    .zoomable-image {
+        cursor: pointer;
+    }
+
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        top: 50%;
+        left: 50%;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0, 0, 0, 0.9);
+        justify-content: center;
+        align-items: center;
+    }
+
+    .modal-content {
+        margin: auto;
+        display: block;
+        max-width: 90%;
+        max-height: 90%;
+    }
+
+    .close {
+        position: absolute;
+        top: 15px;
+        right: 35px;
+        color: #fff;
+        font-size: 40px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+</style>
+
+<script>
+
+  document.addEventListener('turbo:load', function() {
+    const modal = document.getElementById('imageModal');
+    const modalImg = document.getElementById('fullImage');
+    const closeBtn = document.querySelector('.close');
+
+    // Use event delegation for dynamically added images
+    document.addEventListener('click', function(event) {
+      const target = event.target;
+
+      if (target.classList.contains('zoomable-image')) {
+        modal.style.display = 'block';
+        modalImg.src = target.src;
+      }
+    });
+
+    if (closeBtn) {
+      closeBtn.onclick = function() {
+        modal.style.display = 'none';
+      }
+    }
+
+    if (modal) {
+      modal.onclick = function() {
+        modal.style.display = 'none';
+      }
+    }
+  });
+
+  function openCity(evt, cityName) {
+    const tabcontent = document.getElementsByClassName("tabcontent");
+    const tablinks = document.getElementsByClassName("tablinks");
+
+    // Hide all tab content
+    for (let i = 0; i < tabcontent.length; i++) {
+      tabcontent[i].style.display = "none";
+    }
+
+    // Remove active class from all tab links
+    for (let i = 0; i < tablinks.length; i++) {
+      tablinks[i].classList.remove("text-[#3F8CFF]", "underline");
+    }
+
+    // Show current tab content and add active class to clicked tab
+    document.getElementById(cityName).style.display = "block";
+    evt.currentTarget.classList.add("text-[#3F8CFF]", "underline");
+  }
+
+  // Set default tab to open
+  document.getElementById("tab-history").click();
+</script>

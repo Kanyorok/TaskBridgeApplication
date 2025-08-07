@@ -1,0 +1,146 @@
+<% if current_user.has_role? :admin or current_user.has_role?('project manager') or current_user.has_role?(:agent) %>
+  <%= form_with(model: [project, ticket, ticket.comments.build], data: { turbo: false }) do |f| %>
+    <div class="relative z-0 w-full mb-6 group">
+      <div class="flex justify-between mb-4">
+        <%= @ticket.statuses.pluck('statuses.name').first %>
+        <!-- Close Icon -->
+        <%= link_to cancel_redirect_path, class: "absolute top-2 right-4 text-gray-500 hover:text-gray-700" do %>
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        <% end %>
+      </div>
+      <%= f.hidden_field :status, value: @ticket.statuses.pluck('statuses.name').first %>
+      <%= f.label :what, 'Statement of the Problem *', class: "capitalize block mb-1 text-sm font-medium text-gray-900 dark:text-white" %><br />
+      <%= f.text_field :what, class: "border border-gray-300 rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500", placeholder: '', required: true %>
+    </div>
+    <h3 class="pb-2 font-bold"> State reason for selected status?</h3>
+    <div class="relative z-0 w-full mb-6 group">
+      <div data-controller="text-limit" data-text-limit-limit-value="3000">
+        <p id="char-count">0/3000</p>
+        <div class="rich-text-container h-[200px] overflow-y-auto border border-gray-300 rounded">
+          <%= f.rich_text_area :content, id: "content", data: {
+            text_limit_target: "content",
+            is_admin: current_user.has_role?(:admin) || current_user.has_role?('project manager') || current_user.has_role?('agent')
+          }, class: 'w-full h-full' %>
+        </div>
+      </div>
+    </div>
+    <% unless current_user.has_role?(:client) %>
+      <div class="mb-2">
+        <%= f.label :user_ids, 'Users to Email', class: "block mb-2 text-sm font-medium text-gray-900 dark:text-white" %>
+      </div>
+
+      <div class="relative w-full mb-4">
+        <input type="text" id="searchUser" class="h-10 border border-gray-300 rounded-lg dark:text-black px-2 text-sm w-full"
+               placeholder="Search User..." onclick="showDropdown()" onkeyup="filterUserDropdown()" autocomplete="off">
+
+        <!-- Selected Items Container -->
+        <div id="selectedUsers" class="flex flex-wrap gap-2 mt-2"></div>
+
+        <!-- Hidden Inputs for Rails Form -->
+        <div id="hiddenUserInputs"></div>
+
+        <!-- Dropdown List -->
+        <div id="userDropdown" class="absolute w-full bg-white border rounded-lg mt-1 shadow-lg max-h-40 overflow-y-auto hidden z-10">
+          <div class="flex justify-start p-2">
+            <button type="button" onclick="hideDropdown()" class="text-gray-500 hover:text-gray-700 text-left">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-6">
+                <path fill-rule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25Zm-1.72 6.97a.75.75 0 1 0-1.06 1.06L10.94 12l-1.72 1.72a.75.75 0 1 0 1.06 1.06L12 13.06l1.72 1.72a.75.75 0 1 0 1.06-1.06L13.06 12l1.72-1.72a.75.75 0 1 0-1.06-1.06L12 10.94l-1.72-1.72Z" clip-rule="evenodd" />
+              </svg>
+            </button>
+          </div>
+
+          <!-- Users List -->
+          <% users = @project.users.distinct.order(:first_name, :last_name) %>
+          <% users.each do |user| %>
+            <div class="dropdown-item px-4 py-2 hover:bg-gray-100 cursor-pointer" data-user-id="<%= user.id %>" onclick="selectUser(this)">
+              <%= user.name %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+    <% end %>
+    <div class="flex items-center justify-between">
+      <%= f.submit "Submit", class: 'mt-4 w-2/5 h-12 border border-b-4 border-r-2 border-black dark:border-slate-100 p-3 font-semibold rounded' %>
+      <%= link_to 'Cancel', cancel_redirect_path, data: { turbo: false }, class: "cancel-button mt-4 w-2/5 h-12 border border-b-4 border-r-2 border-black dark:border-slate-100 p-3 font-semibold rounded flex justify-center" %>
+    </div>
+  <% end %>
+<% elsif  current_user.has_role? :client %>
+  <%= form_with(model: [project, ticket, ticket.comments.build], data: {turbo: false}) do |f| %>
+    <div class="relative z-0 w-full mb-6 group">
+      <%= @ticket.status %>
+      <%= f.hidden_field :status, value: ticket.status %>
+      <%= f.label :what, 'Reason *', class: "capitalize block mb-1 text-sm font-medium text-gray-900 dark:text-white" %><br />
+      <%= f.text_field :what,  class: "border border-gray-300 rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500", placeholder: '', required: true %>
+    </div>
+    <h3 class="pb-2 font-bold"> Clarification of the Issues*</h3>
+    <div class="relative z-0 w-full mb-6 group">
+      <div data-controller="text-limit" data-text-limit-limit-value="200">
+        <p id="char-count">0/500</p>
+        <%= f.rich_text_area :content, id: "content", data: { text_limit_target: "content" }, class: 'min-h-[300px]', maxlength: 200 %>
+      </div>
+    </div>
+    <%= f.submit "Submit", class: 'mt-4 h-12 border border-b-4 border-r-2 border-black dark:border-slate-100 p-3 font-semibold rounded' %>
+  <% end %>
+<% end %>
+<script>
+  let selectedUsers = [];
+  function showDropdown() {
+    document.getElementById("userDropdown").classList.remove("hidden");
+  }
+  function hideDropdown() {
+    document.getElementById("userDropdown").classList.add("hidden");
+  }
+  function filterUserDropdown() {
+    let input = document.getElementById("searchUser").value.toLowerCase();
+    let items = document.querySelectorAll("#userDropdown .dropdown-item");
+
+    items.forEach(item => {
+      let text = item.textContent.toLowerCase();
+      item.style.display = text.includes(input) ? "block" : "none";
+    });
+  }
+  function selectUser(element) {
+    let userId = element.getAttribute("data-user-id");
+    let userName = element.textContent;
+    if (!selectedUsers.some(user => user.id === userId)) {
+      selectedUsers.push({ id: userId, name: userName });
+      // Update Selected UI
+      let tag = document.createElement("div");
+      tag.className = "bg-blue-100 text-blue-800 px-2 py-1 rounded-md flex items-center gap-2";
+      tag.innerHTML = `${userName} <span onclick="removeUser('${userId}', this)" class="cursor-pointer text-red-500">×</span>`;
+      document.getElementById("selectedUsers").appendChild(tag);
+      // Add a new hidden input for each selected user
+      let input = document.createElement("input");
+      input.type = "hidden";
+      input.name = "comment[user_ids][]"; // Ensure it's an array
+      input.value = userId;
+      input.classList.add(`user-input-${userId}`);
+      document.getElementById("hiddenUserInputs").appendChild(input);
+      // Remove the selected user from the dropdown
+      element.remove();
+    }
+    // Hide Dropdown
+    hideDropdown();
+  }
+  function removeUser(userId, element) {
+    selectedUsers = selectedUsers.filter(user => user.id !== userId);
+    element.parentElement.remove();
+    // Remove hidden input
+    let input = document.querySelector(`.user-input-${userId}`);
+    if (input) {
+      input.remove();
+    }
+    // Add the user back to the dropdown
+    let userDropdown = document.getElementById("userDropdown");
+    let userName = element.parentElement.getAttribute("data-user-name"); // Remove the × character
+    let dropdownItem = document.createElement("div");
+    dropdownItem.className = "dropdown-item px-4 py-2 hover:bg-gray-100 cursor-pointer";
+    dropdownItem.setAttribute("data-user-id", userId);
+    dropdownItem.setAttribute("onclick", "selectUser(this)");
+    dropdownItem.textContent = userName;
+    userDropdown.appendChild(dropdownItem);
+  }
+</script>
