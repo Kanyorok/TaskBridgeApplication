@@ -23,6 +23,7 @@ set :deploy_to, "/home/taskbridgetest/#{fetch(:application)}"
 
 # Default value for :linked_files is []
 append :linked_files, "config/database.yml", "config/master.key"
+set :linked_files, fetch(:linked_files, []).push("config/credentials/staging.key")
 
 # Default value for linked_dirs is []
 
