@@ -65,6 +65,8 @@ group :development do
   gem 'letter_opener', group: :development # For opening emails in browser during development
   gem 'rails-erd', group: :development
   gem 'rubocop', '>= 1.0', '< 2.0'
+  gem 'ed25519', '~> 1.2'
+  gem 'bcrypt_pbkdf', '~> 1.0'
 end
 
 group :test do
