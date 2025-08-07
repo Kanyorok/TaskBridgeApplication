@@ -2,7 +2,7 @@
 lock "~> 3.19.1"
 
 set :application, "TaskBridge"
-set :repo_url, "https://github.com/Kanyorok/TaskBridgeApp.git"
+set :repo_url, "https://github.com/Kanyorok/TaskBridgeApplication.git"
 set :branch, 'dev'
 
 # Default branch is :master
