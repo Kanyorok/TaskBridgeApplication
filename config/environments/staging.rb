@@ -1,0 +1,10 @@
+require_relative "production"
+
+Rails.application.configure do
+  config.eager_load = true
+  config.cache_classes = true
+  config.consider_all_requests_local = false
+  config.assets.compile = false
+  config.assets.digest = true
+  # Add other production-like settings as needed
+end
