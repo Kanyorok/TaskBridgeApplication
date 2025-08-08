@@ -13,7 +13,7 @@ set :repo_url, "https://github.com/Kanyorok/TaskBridgeApplication.git"
 set :branch, 'dev' # override in staging.rb or production.rb if needed
 
 # Deployment directory
-set :deploy_to, "/home/taskbridgetest/#{fetch(:application)}"
+set :deploy_to, "/home/deploy/#{fetch(:application)}"
 
 # Ruby version via rbenv (optional but recommended)
 set :rbenv_type, :user
